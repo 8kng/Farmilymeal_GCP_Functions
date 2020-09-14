@@ -17,7 +17,8 @@ def familyquestion(request: Request) -> Union[Response, None]:
     if request.method == 'POST':
         request_json = request.get_json()
         textdata = request_json['file']
-        stmt = sqlalchemy.text('INSERT INTO entries (guestName, content) value({0}, {1});').format("Question1", textdata)
+        stmt = sqlalchemy.text(
+            'INSERT INTO entries (guestName, content) value({0}, {1});').format("Question1", textdata)
         db = sqlalchemy.create_engine(
             sqlalchemy.engine.url.URL(
                 drivername=driver_name,
