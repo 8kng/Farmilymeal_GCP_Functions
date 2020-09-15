@@ -21,7 +21,19 @@ query_string = dict({"unix_socket": "/cloudsql/{}".format(connection_name)})
 Base=declarative_base()
 
 def familyquestion(request: Request) -> Union[Response, None]:
-    engine = create_engine('farmily-meal:asia-northeast1:questions')
+    engine = sqlalchemy.create_engine(
+        sqlalchemy.engine.url.URL(
+            drivername=driver_name,
+            username=db_user,
+            password=db_password,
+            database=db_name,
+            query=query_string,
+        ),
+        pool_size=5,
+        max_overflow=2,
+        pool_timeout=30,
+        pool_recycle=1800
+    )
     SessionClass=sessionmaker(engine) 
     session=SessionClass()
     request_json = request.get_json()
@@ -31,8 +43,8 @@ def familyquestion(request: Request) -> Union[Response, None]:
     session.commit()
     return ('finish')
 
-    class User(Base):
-        _tablename_="question"
-        question_id=Column(Integer, primary_key=True)
-        guestName=Column(String(255))
-        content=Column(String(255))
+class User(Base):
+    __tablename__="question"
+    question_id=Column(Integer, primary_key=True)
+    guestName=Column(String(255))
+    content=Column(String(255))
