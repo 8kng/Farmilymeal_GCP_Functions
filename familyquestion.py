@@ -38,13 +38,13 @@ def familyquestion(request: Request) -> Union[Response, None]:
     session=SessionClass()
     request_json = request.get_json()
     textdata = request_json['file']
-    questiona=User(guestName="Question1", content=textdata)
-    session.add(questiona)
+    questionadd=session.query(User).filter(User.guestName=="Question0").first()
+    questionadd.content=textdata
     session.commit()
     return ('finish')
 
 class User(Base):
-    __tablename__="question"
+    __tablename__="entries"
     question_id=Column(Integer, primary_key=True)
     guestName=Column(String(255))
     content=Column(String(255))
