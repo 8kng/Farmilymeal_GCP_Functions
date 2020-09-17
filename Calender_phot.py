@@ -1,13 +1,3 @@
-import os
-
-from google.cloud import storage
-from click.types import File
-from flask import Request, Response
-from flask.helpers import make_response
-from typing import Union
-
-meal_phot = os.environ['meal_phot']
-
 def calendar_photo(request: Request) -> Union[Response, None]:
     """Responds to any HTTP request.
     Args:
@@ -23,10 +13,11 @@ def calendar_photo(request: Request) -> Union[Response, None]:
 
     gcs = storage.Client()
     bucket = gcs.get_bucket(meal_phot)
+    none = "Noimage.jpg"
 
     blob = bucket.get_blob(filename)
     if (blob == None):
-        blob = bucket.get_blob("Noimage.jpg")
-    photo = blob
+        blob = bucket.get_blob(none)
+        return make_response(none)
 
-    return make_response(photo)
+    return make_response(filename)
