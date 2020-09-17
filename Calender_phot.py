@@ -8,7 +8,7 @@ from typing import Union
 
 meal_phot = os.environ['meal_phot']
 
-def hello_world(request: Request) -> Union[Response, None]:
+def calendar_photo(request: Request) -> Union[Response, None]:
     """Responds to any HTTP request.
     Args:
         request (flask.Request): HTTP request object.
@@ -18,8 +18,8 @@ def hello_world(request: Request) -> Union[Response, None]:
         `make_response <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>`.
     """
     request_json = request.get_json()
-    daydate = request_json['date']
-    filename = daydate + ".jpeg"
+    datedata = request_json['date']
+    filename = datedata + ".jpeg"
 
     gcs = storage.Client()
     bucket = gcs.get_bucket(meal_phot)
@@ -27,5 +27,6 @@ def hello_world(request: Request) -> Union[Response, None]:
     blob = bucket.get_blob(filename)
     if (blob == None):
         blob = bucket.get_blob("Noimage.jpg")
+    photo = blob
 
-    return make_response(filename)
+    return make_response(photo)
