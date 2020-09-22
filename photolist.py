@@ -13,6 +13,7 @@ from sqlalchemy.schema import Column
 from sqlalchemy.types import Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import desc
+import datetime
 
 meal_phot = os.environ['meal_phot']
 connection_name = os.environ['INSTANCE_CONNECTION_NAME']
@@ -53,13 +54,14 @@ def photolist(request: Request) -> Union[Response, None]:
     elif request.method == 'POST':
         request_json = request.get_json()
         newphoto = request_json['madakimetenai']
+        now_datetime = datetime.datetime.now()
 
         new_url = "https://storage.cloud.google.com/meal_phot/{}".format(newphoto)
-        new_date = "{0}/{1}/{2}/{3}:{4}".format(now.year, now.month, now.day, now.hour, now.minute)
+        new_date = current_datetime.strftime('%Y/%#m/&#d/%#H:%#M')
         photo_add = Photo(url = new_url, datetime = new_date)
         session.add(photo_add)
         session.commit()
-        
+
         return make_response("201 uploaded", 201)
 
 class Photo(Base):
