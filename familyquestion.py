@@ -38,12 +38,12 @@ def familyquestion(request: Request) -> Union[Response, None]:
         session = SessionClass()
 
         request_json = request.get_json()
-        textdata = request_json['file']
+        textdata = request_json['file']  # TODO: 名前を適切なものにする
         id = request_json['id']
 
         questionadd = session.query(Question).filter(
             Question.id == id).first()
-        questionadd.content = textdata
+        questionadd.text = textdata
         session.commit()
 
         return make_response("201 Created", 201)
