@@ -45,13 +45,17 @@ def photolist(request: Request) -> Union[Response, None]:
     )
     SessionClass=sessionmaker(engine) 
     session=SessionClass()
-    photourllist = []
-    datelist = []
-    photolist = session.query(User.photourl).all()
-    datelist = session.query(User.date).all()
+    photourllist = dict
+    datelist = dict
+    for i in range(1, 20):
+        listchange = session.query(User).filter(User.entryId==n).first()
+        photourllist[i] = listchange.photourl
+        datelist[i] = listchange.date
 
     if request.method == 'GET':
-        return make_response(photolist, datelist)
+        photores = make_response(photolist, {'Content-Type': 'application/json'})
+        dateres = make_response(datelist, {'Content-Type':'application/json'})
+        return (photores, dateres)
      
     elif request.method == 'POST':
         request_json = request.get_json()
