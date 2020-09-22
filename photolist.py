@@ -1,4 +1,5 @@
 import os
+from flask import json
 import sqlalchemy
 
 from google.cloud import storage
@@ -9,8 +10,9 @@ from typing import Union
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import Column
-from sqlalchemy.types import Integer, String
+from sqlalchemy.types import Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import desc
 
 meal_phot = os.environ['meal_phot']
 connection_name = os.environ['INSTANCE_CONNECTION_NAME']
@@ -19,17 +21,10 @@ db_name = os.environ['NAME']
 db_user = os.environ['USER']
 driver_name = 'mysql+pymysql'
 query_string = dict({"unix_socket": "/cloudsql/{}".format(connection_name)})
-Base=declarative_base()
+Base = declarative_base()
+
 
 def photolist(request: Request) -> Union[Response, None]:
-    """Responds to any HTTP request.
-    Args:
-        request (flask.Request): HTTP request object.
-    Returns:
-        The response text or any set of values that can be turned into a
-        Response object using
-        `make_response <http://flask.pocoo.org/docs/1.0/api/#flask.Flask.make_response>`.
-    """
     engine = sqlalchemy.create_engine(
         sqlalchemy.engine.url.URL(
             drivername=driver_name,
@@ -43,37 +38,46 @@ def photolist(request: Request) -> Union[Response, None]:
         pool_timeout=30,
         pool_recycle=1800
     )
-    SessionClass=sessionmaker(engine) 
-    session=SessionClass()
-    photourllist = dict
-    datelist = dict
-    for i in range(1, 20):
-        listchange = session.query(User).filter(User.entryId==n).first()
-        photourllist[i] = listchange.photourl
-        datelist[i] = listchange.date
+    SessionClass = sessionmaker(engine)
+    session = SessionClass()
 
     if request.method == 'GET':
-        photores = make_response(photolist, {'Content-Type': 'application/json'})
-        dateres = make_response(datelist, {'Content-Type':'application/json'})
-        return (photores, dateres)
-     
+        # desc で降順に(大きいもの→小さいもの)
+        # 大きい日時→小さい日時(新しい順)
+        # limit で個数を指定
+        photos = session.query(Photo) \
+            .order_by(desc(Photo.datetime)) \
+            .limit(20) \
+            .all()
+
+        # JSON にするときに値に名前をつけてあげないといけないので
+        # 空辞書を作って photos というキーに photos を入れている
+        response_data = {}
+        response_data["photos"] = photos
+
+        # json.dumps で object を JSON の文字列に変換する
+        return make_response(json.dumps(response_data), {'Content-Type': 'application/json'})
+
     elif request.method == 'POST':
         request_json = request.get_json()
         newphoto = request_json['madakimetenai']
         for i in range(1, 19):
             n = i + 1
-            listchange = session.query(User).filter(User.entryId==n).first()
+            listchange = session.query(User).filter(User.entryId == n).first()
             listchange.photourl = photourllist[i]
             listchange.date = datelist[i]
             session.commit()
-        listset = session.query(User).filter(User.entryId==1).first()
-        listset.photourl = "https://storage.cloud.google.com/meal_phot/{}".format(newphoto)
-        listset.date = "{0}/{1}/{2}/{3}:{4}".format(dt_now.year, dt_now.month, dt_now.dat, dt_now.hour.dt.minute)
+        listset = session.query(User).filter(User.entryId == 1).first()
+        listset.photourl = "https://storage.cloud.google.com/meal_phot/{}".format(
+            newphoto)
+        listset.date = "{0}/{1}/{2}/{3}:{4}".format(
+            dt_now.year, dt_now.month, dt_now.dat, dt_now.hour.dt.minute)
         session.commit()
         return make_response('POST')
 
-class User(Base):
-    __tablename__="photolist"
-    entryId=Column(Integer, primary_key=True)
-    photourl=Column(String(255))
-    date=Column(String(255))
+
+class Photo(Base):
+    __tablename__ = "photo"
+    id = Column(Integer, primary_key=True)
+    url = Column(String(255))
+    datetime = Column(DateTime)
