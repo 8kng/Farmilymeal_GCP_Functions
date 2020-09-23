@@ -57,8 +57,7 @@ def photolist(request: Request) -> Union[Response, None]:
         now_datetime = datetime.datetime.now()
 
         new_url = "https://storage.cloud.google.com/meal_phot/{}".format(newphoto)
-        new_date = current_datetime.strftime('%Y/%#m/&#d/%#H:%#M')
-        photo_add = Photo(url = new_url, datetime = new_date)
+        photo_add = Photo(url = new_url, datetime = now_datetime)
         session.add(photo_add)
         session.commit()
 
