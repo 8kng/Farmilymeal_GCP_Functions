@@ -54,7 +54,13 @@ def photolist(request: Request) -> Union[Response, None]:
     elif request.method == 'POST':
         request_json = request.get_json()
         newphoto = request_json['madakimetenai']
+        name = request_json['name']
         now_datetime = datetime.datetime.now()
+
+        gcs = storage.Client()
+        bucket = gcs.get_bucket(meal_phot)
+        blob = bucket.blob(newphoto.name)
+        blob.upload_from_string(newphoto.read(), content_type = newphoto.content_type)
 
         new_url = "https://storage.cloud.google.com/meal_phot/{}".format(newphoto)
         photo_add = Photo(url = new_url, datetime = now_datetime)
