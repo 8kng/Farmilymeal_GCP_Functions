@@ -1,6 +1,6 @@
 import os
 import sqlalchemy
-import flask import json
+from flask import json
 
 from google.cloud import storage
 from click.types import File
@@ -42,10 +42,10 @@ def photolist(request: Request) -> Union[Response, None]:
     session = SessionClass()
 
     if request.method == 'GET':
-        photos = session.query(Photo)
-            .order_by(desc(Photo.datetime))
-            .limit(20)
-            .all()
+        photos = session.query(Photo)\
+            .order_by(desc(Photo.datetime))\
+            .limit(20)\
+            .all()\
         response_data = {}
         response_data["photos"] = photos
 
