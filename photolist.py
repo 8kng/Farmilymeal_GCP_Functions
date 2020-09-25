@@ -67,7 +67,7 @@ def photolist(request: Request) -> Union[Response, None]:
         session.add(photo_add)
         session.commit()
 
-        return make_response("201 uploaded", 201)
+        return make_response("201 uploadedaaa", 201)
 
 class Photo(Base):
     __tablename__="photo"
