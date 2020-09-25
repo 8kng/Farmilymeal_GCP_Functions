@@ -42,15 +42,15 @@ def photolist(request: Request) -> Union[Response, None]:
     session = SessionClass()
 
     if request.method == 'GET':
-        photos = session.query(Photo)\
-            .order_by(desc(Photo.datetime))\
-            .limit(20)\
-            .all()\
         response_data = {}
+        photos = session.query(Photo) \
+            .order_by(desc(Photo.datetime)) \
+            .limit(20) \
+            .all()
         response_data["photos"] = photos
-
-        return make_response(json.dump(response_data), {'Content-Type': 'application/json'})
-
+        
+        return make_response(json.dumps(response_data), {'Content-Type': 'application/json'})
+     
     elif request.method == 'POST':
         request_json = request.get_json()
         newphoto = request_json['madakimetenai']
