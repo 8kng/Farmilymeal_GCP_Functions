@@ -14,6 +14,9 @@ from sqlalchemy.types import Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import desc
 import datetime
+from flask_sqlalchemy import sqlalchemy
+from flask_marshmallow import Marshmallow
+from flask_marshmallow.field import fields
 
 meal_phot = os.environ['meal_phot']
 connection_name = os.environ['INSTANCE_CONNECTION_NAME']
@@ -47,9 +50,9 @@ def photolist(request: Request) -> Union[Response, None]:
             .order_by(desc(Photo.datetime)) \
             .limit(20) \
             .all()
-        response_data["photos"] = photos
+        response_data = jsonify({'photos': Photo(many = True).dumps(photos).data})
         
-        return make_response(json.dumps(response_data), {'Content-Type': 'application/json'})
+        return make_response(response_data, {'Content-Type': 'application/json'})
      
     elif request.method == 'POST':
         request_json = request.get_json()
