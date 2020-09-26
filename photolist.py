@@ -26,51 +26,55 @@ db_user = os.environ['USER']
 driver_name = 'mysql+pymysql'
 query_string = dict({"unix_socket": "/cloudsql/{}".format(connection_name)})
 Base = declarative_base()
+ma = Marshmallow()
 
-def photolist(request: Request) -> Union[Response, None]:
-    engine = sqlalchemy.create_engine(
-        sqlalchemy.engine.url.URL(
-            drivername = driver_name,
-            username = db_user,
-            password = db_password,
-            database = db_name,
-            query = query_string,
-        ),
-        pool_size = 5,
-        max_overflow = 2,
-        pool_timeout = 30,
-        pool_recycle = 1800
-    )
-    SessionClass = sessionmaker(engine) 
-    session = SessionClass()
+class PhotoSchema(ma.ModelSchema):
+    class Meta:
+        model = Photo
+    def photolist(request: Request) -> Union[Response, None]:
+        engine = sqlalchemy.create_engine(
+            sqlalchemy.engine.url.URL(
+                drivername = driver_name,
+                username = db_user,
+                password = db_password,
+                database = db_name,
+                query = query_string,
+            ),
+            pool_size = 5,
+            max_overflow = 2,
+            pool_timeout = 30,
+            pool_recycle = 1800
+        )
+        SessionClass = sessionmaker(engine) 
+        session = SessionClass()
 
-    if request.method == 'GET':
-        response_data = {}
-        photos = session.query(Photo) \
-            .order_by(desc(Photo.datetime)) \
-            .limit(20) \
-            .all()
-        response_data = jsonify({'photos': Photo(many = True).dumps(photos).data})
+        if request.method == 'GET':
+            response_data = {}
+            photos = session.query(Photo) \
+                .order_by(desc(Photo.datetime)) \
+                .limit(20) \
+                .all()
+            response_data = jsonify({'photos': Photo(many = True).dumps(photos).data})
+            
+            return make_response(response_data, 'Content-Type' = 'application/json')
         
-        return make_response(response_data, {'Content-Type': 'application/json'})
-     
-    elif request.method == 'POST':
-        request_json = request.get_json()
-        newphoto = request_json['madakimetenai']
-        name = request_json['name']
-        now_datetime = datetime.datetime.now()
+        elif request.method == 'POST':
+            request_json = request.get_json()
+            newphoto = request_json['madakimetenai']
+            name = request_json['name']
+            now_datetime = datetime.datetime.now()
 
-        gcs = storage.Client()
-        bucket = gcs.get_bucket(meal_phot)
-        blob = bucket.blob(newphoto.name)
-        blob.upload_from_string(newphoto.read(), content_type = newphoto.content_type)
+            gcs = storage.Client()
+            bucket = gcs.get_bucket(meal_phot)
+            blob = bucket.blob(newphoto.name)
+            blob.upload_from_string(newphoto.read(), content_type = newphoto.content_type)
 
-        new_url = "https://storage.cloud.google.com/meal_phot/{}".format(newphoto)
-        photo_add = Photo(url = new_url, datetime = now_datetime)
-        session.add(photo_add)
-        session.commit()
+            new_url = "https://storage.cloud.google.com/meal_phot/{}".format(newphoto)
+            photo_add = Photo(url = new_url, datetime = now_datetime)
+            session.add(photo_add)
+            session.commit()
 
-        return make_response("201 uploadedaaa", 201)
+            return make_response("201 uploadedaaa", 201)
 
 class Photo(Base):
     __tablename__="photo"
