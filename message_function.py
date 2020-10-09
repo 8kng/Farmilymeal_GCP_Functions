@@ -4,7 +4,6 @@ import datetime
 
 from flask import json
 from flask import Flask
-from google.cloud import storage
 from click.types import File
 from flask import Request, Response
 from flask.helpers import make_response
@@ -21,7 +20,6 @@ from flask_marshmallow import Marshmallow
 from flask_marshmallow.fields import fields
 from flask import jsonify # <- `jsonify` instead of `json` 
 
-meal_phot = os.environ['STRAGE_NAME']
 connection_name = os.environ['INSTANCE_CONNECTION_NAME']
 db_password = os.environ['DATABASE_USER_PASSWORD']
 db_name = os.environ['DB_NAME']
@@ -31,7 +29,7 @@ query_string = dict({"unix_socket": "/cloudsql/{}".format(connection_name)})
 Base = declarative_base()
 ma = Marshmallow()
 
-def photolist(request: Request) -> Union[Response, None]:
+def message_function(request: Request) -> Union[Response, None]:
     engine = sqlalchemy.create_engine(
         sqlalchemy.engine.url.URL(
             drivername = driver_name,
@@ -47,42 +45,35 @@ def photolist(request: Request) -> Union[Response, None]:
     )
     SessionClass = sessionmaker(engine) 
     session = SessionClass()
-
-    if request.method == 'GET':
-        response_data = {}
-        photos = session.query(Photo) \
-            .order_by(desc(Photo.datetime)) \
-            .limit(20) \
-            .all()
-        response_data = jsonify({'photos': PhotoSchema(many = True).dump(photos)})
-        response = make_response(response_data)
-        response.headers['Content-Type'] = 'application/json'
-        return response
-     
-    elif request.method == 'POST':
+    
+    if request.method == 'POST':
         request_json = request.get_json()
-        newphoto = request_json['madakimetenai']
-        name = request_json['name']
-        now_datetime = datetime.datetime.now()
+        get_text = request_json['text']
+        get_kind = request_json['kind']
 
-        gcs = storage.Client()
-        bucket = gcs.get_bucket(meal_phot)
-        blob = bucket.blob(newphoto.name)
-        blob.upload_from_string(newphoto.read(), content_type = newphoto.content_type)
-
-        new_url = "https://storage.googleapis.com/meal_phot/{}".format(newphoto)
-        photo_add = Photo(url = new_url, datetime = now_datetime)
-        session.add(photo_add)
+        text_add = Message(text = get_text, kind = get_kind)
+        session.add(text_add)
         session.commit()
 
-        return make_response("201 uploaded", 201)
+        return make_response('201 uploaded', 201)
 
-class Photo(Base):
-    __tablename__="photo"
+    elif request.method == 'GET':
+        response_date = {}
+        texts = session.query(Message)\
+            .order_by(desc(Message.id))\
+            .limit(20)\
+            .all()
+        response_date = jsonify({'texts': MessageSchema(many = True).dump(texts)})
+        response = make_response(response_date)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+class Message(Base):
+    __tablename__="message"
     id = Column(Integer, primary_key=True)
-    url = Column(String(255))
-    datetime = Column(DateTime)
+    text = Column(String(255))
+    kind = Column(String(255))
 
-class PhotoSchema(ma.ModelSchema):
+class MessageSchema(ma.ModelSchema):
     class Meta:
-        model = Photo
+        model = Message
