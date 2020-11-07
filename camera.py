@@ -6,14 +6,15 @@ import datetime
 import urllib.request
 import urllib.parse
 from PIL import Image
-from io import BytesIO
+from io import BytesIO 
 
 now = datetime.datetime.now()
+print(now)
 date = now.strftime("%Y%m%d")
 hour = now.hour
 
-if (1 <= hour <= 12):
-    date += "_1.jpeg"
+if (1 <= hour <=12):
+        date += "_1.jpeg"
 elif (12 <= hour <= 15):
     date += "_2.jpeg"
 else:
@@ -27,11 +28,8 @@ with picamera.PiCamera() as camera:
     time.sleep(2)
     camera.capture(date)
 
-url = "https://asia-northeast1-farmily-meal.cloudfunctions.net/photolist"
-pho = Image.open(date)
-date = {"madakimetenai": pho, "name": date}
+url = "https://asia-northeast1-farmily-meal.cloudfunctions.net/familyphoto_n"
 headers = {"content-type": "applocation/json"}
+files = {'photo': open(date, 'rb'), 'name': date}
 
-res = requests.post(url, headers = headers, data = data)
-print(res.json())
-print (date)
+res = requests.post(url, headers=headers, files=files)
