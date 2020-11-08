@@ -29,7 +29,13 @@ with picamera.PiCamera() as camera:
     camera.capture(date)
 
 url = "https://asia-northeast1-farmily-meal.cloudfunctions.net/familyphoto_n"
+XLSX_MIMETYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 headers = {"content-type": "applocation/json"}
-files = {'photo': open(date, 'rb'), 'name': date}
+image = open(date, 'rb')
+data = {'name': date}
+files = {'photo': (date, image, 'image/jpeg')}
 
-res = requests.post(url, headers=headers, files=files)
+response = requests.post(url, files=files)
+
+print (response.text)
+print (date)
